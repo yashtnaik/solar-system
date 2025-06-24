@@ -91,7 +91,7 @@ docker_build:
     - docker build -t $DOCKER_USERNAME/solar-system:$IMAGE_VERSION .
     - docker images $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
     - mkdir image
-    - docker save $DOCKER_USERNAME/solar-system:$IMAGE_VERSION > image/solar-system-image:$IMAGE_VERSION.tar
+    - docker save $DOCKER_USERNAME/solar-system:$IMAGE_VERSION > image/solar-system-image-$IMAGE_VERSION.tar
   artifacts:
     when: on_success
     expire_in: 3 days
