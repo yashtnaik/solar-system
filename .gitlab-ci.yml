@@ -19,7 +19,7 @@ stages:
   - test
   - containerization
 
-.default_cache: &default_cache
+default_cache: &default_cache
   key:
     files:
       - package-lock.json
@@ -29,7 +29,7 @@ stages:
   policy: pull-push
   when: on_success
 
-.unit_testing:
+unit_testing:
   stage: test
   image: node:17-alpine3.14
   services:
@@ -54,7 +54,7 @@ stages:
     reports:
         junit: test-results.xml
 
-.code_coverage:
+code_coverage:
   stage: test
   image: node:17-alpine3.14
   services:
