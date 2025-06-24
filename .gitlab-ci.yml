@@ -8,13 +8,16 @@ workflow:
     - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^feature/ && $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
 
-# variables:
-#   MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
-#   MONGO_USERNAME: superuser
-#   MONGO_PASSWORD: $M_DB_PASSWORD
+variables:
+  DOCKER_USERNAME: siddharth67
+  IMAGE_VERSION: $CI_PIPELINE_ID
+  # MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
+  # MONGO_USERNAME: superuser
+  # MONGO_PASSWORD: $M_DB_PASSWORD
 
 stages:
   - test
+  - containerization
 
 .default_cache: &default_cache
   key:
@@ -77,3 +80,13 @@ code_coverage:
         path: coverage/cobertura-coverage.xml
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   allow_failure: true
+
+docker_build:
+  stage: containerization
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  dependencies: []
+  script:
+    - docker build -t $DOCKER_USERNAME/solar-system:$IMAGE_VERSION .
+    - docker images $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
