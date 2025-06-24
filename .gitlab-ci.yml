@@ -16,9 +16,20 @@ variables:
 stages:
   - test
 
+.default_cache: &default_cache
+  key:
+    files:
+      - package-lock.json
+    prefix: node_modules
+  paths:
+    - node_modules
+  policy: pull-push
+  when: on_success
+
 unit_testing:
   stage: test
   image: node:17-alpine3.14
+  cache: *default_cache
   before_script:
     - npm install
   script:
@@ -35,6 +46,7 @@ unit_testing:
 code_coverage:
   stage: test
   image: node:17-alpine3.14
+  cache: *default_cache
   before_script:
     - npm install
   script:
