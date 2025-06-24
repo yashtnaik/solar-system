@@ -9,7 +9,7 @@ workflow:
       when: always
 
 variables:
-  DOCKER_USERNAME: siddharth67
+  DOCKER_USERNAME: revel72
   IMAGE_VERSION: $CI_PIPELINE_ID
   # MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
   # MONGO_USERNAME: superuser
@@ -112,3 +112,16 @@ docker_test:
         '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
     - echo $IP
     - docker run --rm alpine sh -c "apk add --no-cache wget >/dev/null && wget -qO- http://$IP:3000/live | grep -q '\"live\"'"
+
+docker_push:
+  stage: containerization
+  image: docker:24.0.5
+  needs:
+    - docker_build
+    - docker_test
+  services:
+    - docker:24.0.5-dind
+  script:
+    - docker load -i image/solar-system-image-$IMAGE_VERSION.tar
+    - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+    - docker push $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
