@@ -111,5 +111,4 @@ docker_test:
     - export IP=$(docker inspect -f \
         '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
     - echo $IP
-    - docker run --rm alpine \
-        wget -qO- http://$IP:3000/live | grep -q '"live"'
+    - docker run --rm alpine sh -c "apk add --no-cache wget >/dev/null && wget -qO- http://$IP:3000/live | grep -q '\"live\"'"
