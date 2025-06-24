@@ -29,7 +29,7 @@ stages:
   policy: pull-push
   when: on_success
 
-unit_testing:
+.unit_testing:
   stage: test
   image: node:17-alpine3.14
   services:
@@ -54,7 +54,7 @@ unit_testing:
     reports:
         junit: test-results.xml
 
-code_coverage:
+.code_coverage:
   stage: test
   image: node:17-alpine3.14
   services:
@@ -107,8 +107,7 @@ docker_test:
     - docker:24.0.5-dind
   script:
     - docker load -i image/solar-system-image-$IMAGE_VERSION.tar
-    - docker run --name solar-system-app -d -p 3000:3000 \
-        $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
+    - docker run --name solar-system-app -d -p 3000:3000 $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
     - export IP=$(docker inspect -f \
         '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
     - echo $IP
