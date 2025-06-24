@@ -8,10 +8,10 @@ workflow:
     - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^feature/ && $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
 
-variables:
-  MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
-  MONGO_USERNAME: superuser
-  MONGO_PASSWORD: $M_DB_PASSWORD
+# variables:
+#   MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
+#   MONGO_USERNAME: superuser
+#   MONGO_PASSWORD: $M_DB_PASSWORD
 
 stages:
   - test
@@ -29,6 +29,14 @@ stages:
 unit_testing:
   stage: test
   image: node:17-alpine3.14
+  services:
+    - name: siddharth67/mongo-db:non-prod
+      alias: mongo
+      pull_policy: always
+  variables:
+    MONGO_URI: 'mongodb://mongo:27017/superData'
+    MONGO_USERNAME: non-prod-user
+    MONGO_PASSWORD: $M_DB_PASSWORD
   cache: *default_cache
   before_script:
     - npm install
@@ -46,6 +54,14 @@ unit_testing:
 code_coverage:
   stage: test
   image: node:17-alpine3.14
+  services:
+    - name: siddharth67/mongo-db:non-prod
+      alias: mongo
+      pull_policy: always
+  variables:
+    MONGO_URI: 'mongodb://mongo:27017/superData'
+    MONGO_USERNAME: non-prod-user
+    MONGO_PASSWORD: $M_DB_PASSWORD
   cache: *default_cache
   before_script:
     - npm install
