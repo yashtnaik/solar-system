@@ -125,3 +125,19 @@ docker_push:
     - docker load -i image/solar-system-image-$IMAGE_VERSION.tar
     - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
     - docker push $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
+
+publish_gitlab_container_registry:
+  stage: containerization
+  needs:
+    - docker_build
+    - docker_test
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  script:
+    - docker load -i image/solar-system-image-$CI_PIPELINE_ID.tar
+    - echo "$CI_REGISTRY | $CI_REGISTRY_USER | $CI_REGISTRY_IMAGE"
+    - docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+    - docker tag $DOCKER_USERNAME/solar-system:$IMAGE_VERSION $CI_REGISTRY_IMAGE/ss-image:$IMAGE_VERSION
+    - docker images
+    - docker push $CI_REGISTRY_IMAGE/ss-image:$IMAGE_VERSION
