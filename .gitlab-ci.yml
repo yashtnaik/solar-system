@@ -19,7 +19,7 @@ stages:
   - test
   - containerization
 
-default_cache: &default_cache
+.default_cache: &default_cache
   key:
     files:
       - package-lock.json
