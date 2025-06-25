@@ -145,11 +145,12 @@ stages:
 
 k8s_dev_deploy:
   stage: dev-deploy
-  image: bitnami/kubectl:1.30
+  image: alpine:3.7
   before_script:
-    - echo "$DEV_KUBECONFIG" | base64 -d > kubeconfig.yaml
-    - export KUBECONFIG=$CI_PROJECT_DIR/kubeconfig.yaml
+    - wget https://storage.googleapis.com/kubernetes-release/release/$(wget -q -O - https://storage.googleapis.com/kubernetes-release/stable.txt)/bin/linux/amd64/kubectl
+    - chmod +x kubectl && mv kubectl /usr/bin/kubectl
   script:
-    - kubectl version --client
+    - export KUBECONFIG=$DEV_KUBE_CONFIG
+    - kubectl version -o yaml
     - kubectl config get-contexts
     - kubectl get nodes
