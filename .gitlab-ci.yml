@@ -145,7 +145,7 @@ docker_push:
     - docker push $CI_REGISTRY_IMAGE/ss-image:$IMAGE_VERSION
 
 k8s_dev_deploy:
-  needs: 
+  stage: dev-deploy
   tags:
     - dev
   script:
@@ -169,4 +169,5 @@ k8s_dev_deploy:
         envsubst < "$file" | kubectl apply -f -
       done
     - kubectl -n $NAMESPACE get all,secret,ingress
+    - docker images
 
