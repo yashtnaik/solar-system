@@ -146,9 +146,9 @@ stages:
 k8s_dev_deploy:
   tags:
     - dev
-  before_script:
-    - echo "$DEV_KUBE_CONFIG" | base64 -d > kubeconfig
   script:
+    - export KUBECONFIG=$DEV_KUBE_CONFIG
+    - kubectl version -o yaml
     - kubectl config get-contexts
     - kubectl get nodes
 
