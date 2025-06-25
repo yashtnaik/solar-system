@@ -11,7 +11,7 @@ workflow:
 variables:
   DOCKER_USERNAME: revel72
   IMAGE_VERSION: $CI_PIPELINE_ID
-  K8S-IMAGE: $DOCKER_USERNAME/solar-system:1886831920
+  K8S_IMAGE: $DOCKER_USERNAME/solar-system:1886831920
   # MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
   # MONGO_USERNAME: superuser
   # MONGO_PASSWORD: $M_DB_PASSWORD
