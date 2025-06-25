@@ -11,6 +11,7 @@ workflow:
 variables:
   DOCKER_USERNAME: revel72
   IMAGE_VERSION: $CI_PIPELINE_ID
+  K8S-IMAGE: $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
   # MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
   # MONGO_USERNAME: superuser
   # MONGO_PASSWORD: $M_DB_PASSWORD
@@ -151,4 +152,13 @@ k8s_dev_deploy:
     - kubectl version -o yaml
     - kubectl config get-contexts
     - kubectl get nodes
+    - echo "Ingress IP and Port:"
+    - |
+      IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+      PORT=$(kubectl -n ingress-nginx get svc ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
+      echo "http://$IP:$PORT"
+    - for file in kubernetes/manifest/*.yaml; do
+        echo "Processing $file"
+        envsubst < "$file" | kubectl apply -f -
+      done
 
