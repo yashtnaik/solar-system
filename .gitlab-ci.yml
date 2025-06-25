@@ -224,8 +224,8 @@ k8s_stage_deploy:
       done
     - kubectl -n $NAMESPACE get all,secret,ingress
   artifacts:
-    reports:
-      dotenv: app_ingress_url.env
+    paths:
+      - ingress_url.txt
   environment:
     name: staging
     url: https://${INGRESS_URL}
