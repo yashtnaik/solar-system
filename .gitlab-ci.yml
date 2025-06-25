@@ -160,11 +160,7 @@ k8s_dev_deploy:
         echo "❌ INGRESS_IP is empty. Invalid ingress host would be generated."
         exit 1
       fi
-    - kubectl -n $NAMESPACE create secret generic mongo-db-creds \
-        --from-literal=MONGO_URI="$MONGO_URI" \
-        --from-literal=MONGO_USERNAME="$MONGO_USERNAME" \
-        --from-literal=MONGO_PASSWORD="$MONGO_PASSWORD" \
-        --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl -n $NAMESPACE create secret generic mongo-db-creds --from-literal=MONGO_URI="$MONGO_URI" --from-literal=MONGO_USERNAME="$MONGO_USERNAME" --from-literal=MONGO_PASSWORD="$MONGO_PASSWORD" --dry-run=client -o yaml | kubectl apply -f -
     - kubectl get namespace development || kubectl create namespace development
     - |
       for file in kubernetes/development/*.yaml; do
