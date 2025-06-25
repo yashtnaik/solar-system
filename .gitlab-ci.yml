@@ -238,5 +238,6 @@ k8s_stage_integration_testing:
       artifacts: true
   before_script:
     - apk add --no-cache curl jq
+    - export INGRESS_URL=$(cat ingress_url.txt)
   script:
     - echo "Testing URL $INGRESS_URL"
