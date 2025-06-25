@@ -145,9 +145,11 @@ stages:
 
 k8s_dev_deploy:
   stage: dev-deploy
-  image: bitnami/kubectl:latest  # Or pin to a version like bitnami/kubectl:1.30.1
+  image: bitnami/kubectl:1.30.1-debian-11-r0  # includes shell + kubectl
+  before_script:
+    - echo "$DEV_KUBECONFIG" | base64 -d > kubeconfig.yaml
+    - export KUBECONFIG=$CI_PROJECT_DIR/kubeconfig.yaml
   script:
-    - export KUBECONFIG=$DEV_KUBE_CONFIG
     - kubectl version --client
     - kubectl config get-contexts
     - kubectl get nodes
