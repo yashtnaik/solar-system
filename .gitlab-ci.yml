@@ -152,11 +152,14 @@ k8s_dev_deploy:
     - kubectl version -o yaml
     - kubectl config get-contexts
     - kubectl get nodes
-    - echo "Ingress IP and Port:"
+    - export NAMESPACE=development
+    - export INGRESS_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+    - echo "📡 INGRESS_IP resolved $INGRESS_IP"
     - |
-      IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
-      PORT=$(kubectl -n ingress-nginx get svc ingress-nginx-controller -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
-      echo "http://$IP:$PORT"
+      if [ -z "$INGRESS_IP" ]; then
+        echo "❌ INGRESS_IP is empty. Invalid ingress host would be generated."
+        exit 1
+      fi
     - kubectl get namespace development || kubectl create namespace development
     - |
       for file in kubernetes/development/*.yaml; do
