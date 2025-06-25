@@ -18,6 +18,7 @@ variables:
 stages:
   - test
   - containerization
+  - dev-deploy
 
 .default_cache: &default_cache
   key:
@@ -29,7 +30,7 @@ stages:
   policy: pull-push
   when: on_success
 
-unit_testing:
+.unit_testing:
   stage: test
   image: node:17-alpine3.14
   services:
@@ -54,7 +55,7 @@ unit_testing:
     reports:
         junit: test-results.xml
 
-code_coverage:
+.code_coverage:
   stage: test
   image: node:17-alpine3.14
   services:
@@ -81,7 +82,7 @@ code_coverage:
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   allow_failure: true
 
-docker_build:
+.docker_build:
   stage: containerization
   image: docker:24.0.5
   services:
@@ -98,7 +99,7 @@ docker_build:
     paths:
       - image
 
-docker_test:
+.docker_test:
   stage: containerization
   image: docker:24.0.5
   needs:
@@ -113,7 +114,7 @@ docker_test:
     - echo $IP
     - docker run --rm alpine sh -c "apk add --no-cache wget >/dev/null && wget -qO- http://$IP:3000/live | grep -q '\"live\"'"
 
-docker_push:
+.docker_push:
   stage: containerization
   image: docker:24.0.5
   needs:
@@ -126,7 +127,7 @@ docker_push:
     - docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
     - docker push $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
 
-publish_gitlab_container_registry:
+.publish_gitlab_container_registry:
   stage: containerization
   needs:
     - docker_build
@@ -141,3 +142,16 @@ publish_gitlab_container_registry:
     - docker tag $DOCKER_USERNAME/solar-system:$IMAGE_VERSION $CI_REGISTRY_IMAGE/ss-image:$IMAGE_VERSION
     - docker images
     - docker push $CI_REGISTRY_IMAGE/ss-image:$IMAGE_VERSION
+
+k8s_dev_deploy:
+  stage: dev-deploy
+  image:
+    name: alpine:3.7
+  dependencies: []
+  before_script:
+    # Download and install the latest stable kubectl binary
+    - wget -qO- "https://storage.googleapis.com/kubernetes-release/release/$(wget -qO- https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" -O kubectl
+    - chmod +x kubectl
+    - mv kubectl /usr/bin/kubectl
+  script:
+    - kubectl version -o yaml
