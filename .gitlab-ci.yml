@@ -194,37 +194,41 @@ stages:
 
 k8s_stage_deploy:
   stage: stage-deploy
-  dependencies: []
-  environment: 
-    name: staging
-    url: $INGRESS_URL
-  tags:
-    - dev
+  image: alpine:3.7
+  when: manual
+  before_script:
+    - wget https://storage.googleapis.com/kubernetes-release/release/$(wget -q -O - https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+    - chmod +x ./kubectl && mv ./kubectl /usr/bin/kubectl
+    - apk add --no-cache gettext && envsubst -V
   script:
-    - temp_kube-config_file=$(printenv KUBECONFIG)
-    - cat $temp_kube-config_file
+    # Inspect and switch the Agent context
+    - cat $KUBECONFIG
     - kubectl config get-contexts
-    - kubectl config use-context louisgimeno72/solar-system:kk-gitlab-agent
-    - export INGRESS_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
-    - echo "📡 INGRESS_IP resolved $INGRESS_IP"
+    - kubectl config use-context demos-group/solar-system:kk-gitlab-agent
+    - kubectl get po -A
+
+
+    # Deploy application
     - |
-      if [ -z "$INGRESS_IP" ]; then
-        echo "❌ INGRESS_IP is empty. Invalid ingress host would be generated."
-        exit 1
-      fi
-    - export INGRESS_URL="solar-system-development.${INGRESS_IP}.nip.io"
-    - echo "$INGRESS_URL" > ingress_url.txt
-    - kubectl -n $NAMESPACE create secret generic mongo-db-creds --from-literal=MONGO_URI="$MONGO_URI" --from-literal=MONGO_USERNAME="$MONGO_USERNAME" --from-literal=MONGO_PASSWORD="$MONGO_PASSWORD" --dry-run=client -o yaml | kubectl apply -f -
-    - kubectl get namespace development || kubectl create namespace development
-    - |
-      for file in kubernetes/development/*.yaml; do
-        echo "Processing $file"
-        envsubst < "$file" | kubectl apply -f -
-      done
-    - kubectl -n $NAMESPACE get all,secret,ingress
+      export INGRESS_IP=$(kubectl -n ingress-nginx get svc ingress-nginx-controller \
+        -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
+    - echo "Ingress IP: $INGRESS_IP"
+    - kubectl -n $NAMESPACE create secret generic mongo-db-creds \
+        --from-literal=MONGO_URI=$MONGO_URI \
+        --from-literal=MONGO_USERNAME=$MONGO_USERNAME \
+        --from-literal=MONGO_PASSWORD=$MONGO_PASSWORD \
+        --save-config --dry-run=client -o yaml \
+      | kubectl apply -f -
+    - for f in kubernetes/manifest/*.yaml; do envsubst < $f | kubectl apply -f -; done
+    - kubectl -n $NAMESPACE get all,secret,ing
+    - echo "INGRESS_URL=$(kubectl -n $NAMESPACE get ing \
+        -o jsonpath="{.items[0].spec.tls[0].hosts[0]}")" >> app_ingress_url.env
   artifacts:
-    paths:
-      - ingress_url.txt
+    reports:
+      dotenv: app_ingress_url.env
+  environment:
+    name: staging
+    url: https://${INGRESS_URL}
 
 k8s_stage_integration_testing:
   stage: stage-deploy
