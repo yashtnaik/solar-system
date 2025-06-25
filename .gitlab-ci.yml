@@ -154,7 +154,7 @@ k8s_dev_deploy:
     - chmod +x kubectl
     - mv kubectl /usr/bin/kubectl
   script:
-    - export KUBECONFIG=$DEV_KUBE_CONFIG
+    - cat "$DEV_KUBE_CONFIG"
     - kubectl version -o yaml
     - kubectl config get-contexts
     - kubectl get nodes
