@@ -145,16 +145,14 @@ stages:
 
 k8s_dev_deploy:
   stage: dev-deploy
-  image:
-    name: alpine:3.7
-  dependencies: []
+  image: alpine:3.7
   before_script:
-    # Download and install the latest stable kubectl binary
-    - wget -qO- "https://storage.googleapis.com/kubernetes-release/release/$(wget -qO- https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" -O kubectl
-    - chmod +x kubectl
-    - mv kubectl /usr/bin/kubectl
+    - wget https://storage.googleapis.com/kubernetes-release/release/\
+      $(wget -q -O - https://storage.googleapis.com/kubernetes-release/stable.txt)/\
+      bin/linux/amd64/kubectl
+    - chmod +x kubectl && mv kubectl /usr/bin/kubectl
   script:
-    - cat "$DEV_KUBE_CONFIG"
+    - export KUBECONFIG=$DEV_KUBE_CONFIG
     - kubectl version -o yaml
     - kubectl config get-contexts
     - kubectl get nodes
