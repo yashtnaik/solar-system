@@ -11,10 +11,10 @@ workflow:
 variables:
   DOCKER_USERNAME: revel72
   IMAGE_VERSION: $CI_PIPELINE_ID
-  K8S_IMAGE: $DOCKER_USERNAME/solar-system:1886831920
-  # MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
-  # MONGO_USERNAME: superuser
-  # MONGO_PASSWORD: $M_DB_PASSWORD
+  K8S_IMAGE: $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
+  MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
+  MONGO_USERNAME: superuser
+  MONGO_PASSWORD: $M_DB_PASSWORD
 
 stages:
   - test
@@ -83,7 +83,7 @@ stages:
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   allow_failure: true
 
-.docker_build:
+docker_build:
   stage: containerization
   image: docker:24.0.5
   services:
@@ -100,7 +100,7 @@ stages:
     paths:
       - image
 
-.docker_test:
+docker_test:
   stage: containerization
   image: docker:24.0.5
   needs:
@@ -115,7 +115,7 @@ stages:
     - echo $IP
     - docker run --rm alpine sh -c "apk add --no-cache wget >/dev/null && wget -qO- http://$IP:3000/live | grep -q '\"live\"'"
 
-.docker_push:
+docker_push:
   stage: containerization
   image: docker:24.0.5
   needs:
@@ -145,6 +145,7 @@ stages:
     - docker push $CI_REGISTRY_IMAGE/ss-image:$IMAGE_VERSION
 
 k8s_dev_deploy:
+  needs: 
   tags:
     - dev
   script:
