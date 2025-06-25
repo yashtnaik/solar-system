@@ -161,6 +161,8 @@ k8s_dev_deploy:
         echo "❌ INGRESS_IP is empty. Invalid ingress host would be generated."
         exit 1
       fi
+    - export INGRESS_URL="solar-system-development.${INGRESS_IP}.nip.io"
+    - echo "$INGRESS_URL" > ingress_url.txt
     - kubectl -n $NAMESPACE create secret generic mongo-db-creds --from-literal=MONGO_URI="$MONGO_URI" --from-literal=MONGO_USERNAME="$MONGO_USERNAME" --from-literal=MONGO_PASSWORD="$MONGO_PASSWORD" --dry-run=client -o yaml | kubectl apply -f -
     - kubectl get namespace development || kubectl create namespace development
     - |
@@ -169,14 +171,20 @@ k8s_dev_deploy:
         envsubst < "$file" | kubectl apply -f -
       done
     - kubectl -n $NAMESPACE get all,secret,ingress
+  artifacts:
+    paths:
+      - ingress_url.txt
+
 
 k8s_dev_integration_testing:
   stage: dev-deploy
   needs:
-    - k8s_dev_deploy
+    - job: k8s_dev_deploy
+      artifacts: true
   image: alpine:3.7
   before_script:
     - apk --no-cache add curl jq
+    - export INGRESS_URL=$(cat ingress_url.txt)
   script:
     - echo "Using Ingress URL $INGRESS_URL"
     - curl -s -k https://$INGRESS_URL/live  | jq -r .status | grep -i live
