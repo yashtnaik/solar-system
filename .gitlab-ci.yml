@@ -20,6 +20,7 @@ stages:
   - test
   - containerization
   - dev-deploy
+  - stage-deploy
 
 .default_cache: &default_cache
   key:
@@ -144,12 +145,12 @@ stages:
     - docker images
     - docker push $CI_REGISTRY_IMAGE/ss-image:$IMAGE_VERSION
 
-k8s_dev_deploy:
+.k8s_dev_deploy:
   stage: dev-deploy
   dependencies: []
   environment: 
     name: development
-    # url: $INGRESS_URL
+    url: $INGRESS_URL
   tags:
     - dev
   script:
@@ -179,7 +180,7 @@ k8s_dev_deploy:
     paths:
       - ingress_url.txt
 
-k8s_dev_integration_testing:
+.k8s_dev_integration_testing:
   stage: dev-deploy
   needs:
     - job: k8s_dev_deploy
@@ -190,3 +191,49 @@ k8s_dev_integration_testing:
     - export INGRESS_URL=$(cat ingress_url.txt)
   script:
     - echo "Using Ingress URL $INGRESS_URL"
+
+k8s_stage_deploy:
+  stage: stage-deploy
+  dependencies: []
+  environment: 
+    name: staging
+    url: $INGRESS_URL
+  tags:
+    - dev
+  script:
+    - temp_kube-config_file=$(printenv KUBECONFIG)
+    - cat $temp_kube-config_file
+    - kubectl config get-contexts
+    - kubectl config use-context louisgimeno72/solar-system:kk-gitlab-agent
+    - export INGRESS_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+    - echo "📡 INGRESS_IP resolved $INGRESS_IP"
+    - |
+      if [ -z "$INGRESS_IP" ]; then
+        echo "❌ INGRESS_IP is empty. Invalid ingress host would be generated."
+        exit 1
+      fi
+    - export INGRESS_URL="solar-system-development.${INGRESS_IP}.nip.io"
+    - echo "$INGRESS_URL" > ingress_url.txt
+    - kubectl -n $NAMESPACE create secret generic mongo-db-creds --from-literal=MONGO_URI="$MONGO_URI" --from-literal=MONGO_USERNAME="$MONGO_USERNAME" --from-literal=MONGO_PASSWORD="$MONGO_PASSWORD" --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl get namespace development || kubectl create namespace development
+    - |
+      for file in kubernetes/development/*.yaml; do
+        echo "Processing $file"
+        envsubst < "$file" | kubectl apply -f -
+      done
+    - kubectl -n $NAMESPACE get all,secret,ingress
+  artifacts:
+    paths:
+      - ingress_url.txt
+
+k8s_stage_integration_testing:
+  stage: stage-deploy
+  image: alpine:3.7
+  needs:
+    - k8s_stage_deploy
+  before_script:
+    - apk add --no-cache curl jq
+  script:
+    - echo "Testing URL $INGRESS_URL"
+    - curl -s -k https://$INGRESS_URL/live  | jq -r .status | grep -i live
+    - curl -s -k https://$INGRESS_URL/ready | jq -r .status | grep -i ready
