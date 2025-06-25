@@ -169,5 +169,4 @@ k8s_dev_deploy:
         envsubst < "$file" | kubectl apply -f -
       done
     - kubectl -n $NAMESPACE get all,secret,ingress
-    - docker images
 
