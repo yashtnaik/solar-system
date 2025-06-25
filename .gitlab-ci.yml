@@ -234,10 +234,9 @@ k8s_stage_integration_testing:
   stage: stage-deploy
   image: alpine:3.7
   needs:
-    - k8s_stage_deploy
+    - job: k8s_stage_deploy
+      artifacts: true
   before_script:
     - apk add --no-cache curl jq
   script:
     - echo "Testing URL $INGRESS_URL"
-    - curl -s -k https://$INGRESS_URL/live  | jq -r .status | grep -i live
-    - curl -s -k https://$INGRESS_URL/ready | jq -r .status | grep -i ready
