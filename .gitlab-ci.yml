@@ -83,7 +83,7 @@ stages:
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   allow_failure: true
 
-docker_build:
+.docker_build:
   stage: containerization
   image: docker:24.0.5
   services:
@@ -100,7 +100,7 @@ docker_build:
     paths:
       - image
 
-docker_test:
+.docker_test:
   stage: containerization
   image: docker:24.0.5
   needs:
@@ -115,7 +115,7 @@ docker_test:
     - echo $IP
     - docker run --rm alpine sh -c "apk add --no-cache wget >/dev/null && wget -qO- http://$IP:3000/live | grep -q '\"live\"'"
 
-docker_push:
+.docker_push:
   stage: containerization
   image: docker:24.0.5
   needs:
@@ -169,4 +169,16 @@ k8s_dev_deploy:
         envsubst < "$file" | kubectl apply -f -
       done
     - kubectl -n $NAMESPACE get all,secret,ingress
+
+k8s_dev_integration_testing:
+  stage: dev-deploy
+  needs:
+    - k8s_dev_deploy
+  image: alpine:3.7
+  before_script:
+    - apk --no-cache add curl jq
+  script:
+    - echo "Using Ingress URL: $INGRESS_URL"
+    - curl -s -k https://$INGRESS_URL/live  | jq -r .status | grep -i live
+    - curl -s -k https://$INGRESS_URL/ready | jq -r .status | grep -i ready
 
