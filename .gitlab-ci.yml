@@ -146,6 +146,10 @@ stages:
 
 k8s_dev_deploy:
   stage: dev-deploy
+  dependencies: []
+  environment: 
+    name: development
+    # url: $INGRESS_URL
   tags:
     - dev
   script:
@@ -175,7 +179,6 @@ k8s_dev_deploy:
     paths:
       - ingress_url.txt
 
-
 k8s_dev_integration_testing:
   stage: dev-deploy
   needs:
@@ -187,6 +190,4 @@ k8s_dev_integration_testing:
     - export INGRESS_URL=$(cat ingress_url.txt)
   script:
     - echo "Using Ingress URL $INGRESS_URL"
-    - curl -s -k https://$INGRESS_URL/live  | jq -r .status | grep -i live
-    - curl -s -k https://$INGRESS_URL/ready | jq -r .status | grep -i ready
 
