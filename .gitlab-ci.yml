@@ -145,7 +145,7 @@ stages:
 
 k8s_dev_deploy:
   stage: dev-deploy
-  image: bitnami/kubectl:1.30.1-debian-11-r0  # includes shell + kubectl
+  image: bitnami/kubectl:1.30
   before_script:
     - echo "$DEV_KUBECONFIG" | base64 -d > kubeconfig.yaml
     - export KUBECONFIG=$CI_PROJECT_DIR/kubeconfig.yaml
