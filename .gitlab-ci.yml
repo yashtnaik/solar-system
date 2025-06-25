@@ -178,7 +178,7 @@ k8s_dev_integration_testing:
   before_script:
     - apk --no-cache add curl jq
   script:
-    - echo "Using Ingress URL: $INGRESS_URL"
+    - echo "Using Ingress URL $INGRESS_URL"
     - curl -s -k https://$INGRESS_URL/live  | jq -r .status | grep -i live
     - curl -s -k https://$INGRESS_URL/ready | jq -r .status | grep -i ready
 
