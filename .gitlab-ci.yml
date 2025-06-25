@@ -207,10 +207,15 @@ k8s_stage_deploy:
     - kubectl config use-context louisgimeno72/solar-system:kk-gitlab-agent
     - kubectl get po -A
     # Deploy application
+    - export INGRESS_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+    - echo "📡 INGRESS_IP resolved $INGRESS_IP"
     - |
-      export INGRESS_IP=$(kubectl -n ingress-nginx get svc ingress-nginx-controller \
-        -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
-    - echo "Ingress IP $INGRESS_IP"
+      if [ -z "$INGRESS_IP" ]; then
+        echo "❌ INGRESS_IP is empty. Invalid ingress host would be generated."
+        exit 1
+      fi
+    - export INGRESS_URL="solar-system-development.${INGRESS_IP}.nip.io"
+    - echo "$INGRESS_URL" > ingress_url.txt
     - kubectl -n $NAMESPACE create secret generic mongo-db-creds --from-literal=MONGO_URI="$MONGO_URI" --from-literal=MONGO_USERNAME="$MONGO_USERNAME" --from-literal=MONGO_PASSWORD="$MONGO_PASSWORD" --save-config --dry-run=client -o yaml | kubectl apply -f -
     - |
       for file in kubernetes/development/*.yaml; do
@@ -218,8 +223,6 @@ k8s_stage_deploy:
         envsubst < "$file" | kubectl apply -f -
       done
     - kubectl -n $NAMESPACE get all,secret,ingress
-    - echo "INGRESS_URL=$(kubectl -n $NAMESPACE get ing \
-        -o jsonpath="{.items[0].spec.tls[0].hosts[0]}")" >> app_ingress_url.env
   artifacts:
     reports:
       dotenv: app_ingress_url.env
