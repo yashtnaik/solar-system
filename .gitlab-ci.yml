@@ -204,7 +204,7 @@ k8s_stage_deploy:
     # Inspect and switch the Agent context
     - cat $KUBECONFIG
     - kubectl config get-contexts
-    - kubectl config use-context demos-group/solar-system:kk-gitlab-agent
+    - kubectl config use-context louisgimeno72/solar-system:kk-gitlab-agent
     - kubectl get po -A
     # Deploy application
     - |
