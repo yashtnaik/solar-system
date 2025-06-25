@@ -144,10 +144,12 @@ stages:
     - docker push $CI_REGISTRY_IMAGE/ss-image:$IMAGE_VERSION
 
 k8s_dev_deploy:
-  stage: dev-deploy
   tags:
-    - local
+    - dev
+  before_script:
+    - echo "$DEV_KUBE_CONFIG_B64" | base64 -d > kubeconfig
+    - export KUBECONFIG=$PWD/kubeconfig
   script:
-    - export KUBECONFIG=~/.kube/config
     - kubectl config get-contexts
     - kubectl get nodes
+
