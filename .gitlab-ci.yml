@@ -147,8 +147,7 @@ k8s_dev_deploy:
   tags:
     - dev
   before_script:
-    - echo "$DEV_KUBE_CONFIG" > kubeconfig
-    - export KUBECONFIG=$PWD/kubeconfig
+    - echo "$DEV_KUBE_CONFIG" | base64 -d > kubeconfig
   script:
     - kubectl config get-contexts
     - kubectl get nodes
