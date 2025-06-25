@@ -148,12 +148,9 @@ k8s_dev_deploy:
   image: alpine:3.17
   before_script:
     - apk add --no-cache curl
-    - K8S_VERSION=$(curl -s https://dl.k8s.io/release/stable.txt)
-    - curl -LO "https://dl.k8s.io/release/${K8S_VERSION}/bin/linux/amd64/kubectl"
+    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     - chmod +x kubectl && mv kubectl /usr/bin/kubectl
-    - echo "$DEV_KUBECONFIG_B64" | base64 -d > kubeconfig.yaml
-    - export KUBECONFIG=$CI_PROJECT_DIR/kubeconfig.yaml
   script:
+    - export KUBECONFIG=$DEV_KUBE_CONFIG
     - kubectl version --client
-    - kubectl config get-contexts
     - kubectl get nodes
