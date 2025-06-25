@@ -206,13 +206,11 @@ k8s_stage_deploy:
     - kubectl config get-contexts
     - kubectl config use-context demos-group/solar-system:kk-gitlab-agent
     - kubectl get po -A
-
-
     # Deploy application
     - |
       export INGRESS_IP=$(kubectl -n ingress-nginx get svc ingress-nginx-controller \
         -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
-    - echo "Ingress IP: $INGRESS_IP"
+    - echo "Ingress IP $INGRESS_IP"
     - kubectl -n $NAMESPACE create secret generic mongo-db-creds \
         --from-literal=MONGO_URI=$MONGO_URI \
         --from-literal=MONGO_USERNAME=$MONGO_USERNAME \
