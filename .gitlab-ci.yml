@@ -190,4 +190,3 @@ k8s_dev_integration_testing:
     - export INGRESS_URL=$(cat ingress_url.txt)
   script:
     - echo "Using Ingress URL $INGRESS_URL"
-
