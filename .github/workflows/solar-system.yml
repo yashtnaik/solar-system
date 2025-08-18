@@ -15,9 +15,6 @@ jobs:
     unit-testing:
         runs-on: ubuntu-latest
         steps:
-            - name: echo
-              run: |
-                        echo "'${{ vars.MONGO_USERNAME}}' AND '${{ secrets.MONGO_PASSWORD }}'"
             - name: Checkout code
               uses: actions/checkout@v4
 
