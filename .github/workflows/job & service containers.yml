@@ -1,0 +1,107 @@
+name: Solar System Workflow
+
+on:
+    workflow_dispatch:
+    push:
+        branches:
+            - main
+            - 'feature/*'
+
+env:
+    # MONGO_URI: 'mongo+srv://supercluster.d83jj.mongodb.net/superData'
+    # MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
+    # MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+    MONGO_URI: 'mongodb+srv://${{ vars.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@supercluster.d83jj.mongodb.net/superData?retryWrites=true&w=majority'
+    IMAGE_TAG: ${{ github.sha }}
+    IMAGE_NAME: 'solarsystem'
+
+jobs:
+    unit-testing:
+          name: Unit testing
+          continue-on-error: true
+          strategy:
+                matrix:
+                    node-version: [18, 20]
+                    os: [ubuntu-latest] #macos-latest]
+                    exclude:
+                        - os: macos-latest
+                          node-version: 18
+          services:
+            mongo:
+                image: siddharth67/mongo-db:non-prod
+                ports:
+                    - 27017:27017
+          env:
+                MONGO_URI: 'mongodb+srv://${{ vars.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@localhost:27017/superData?retryWrites=true&w=majority'
+
+          runs-on: ${{ matrix.os }}
+          steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Node.js ${{ matrix.node-version}}
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node-version }}
+                  
+            - name: caching npm dependencies
+              uses: actions/cache@v4
+              id: cache
+              with:
+                  path: node_modules
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('**/lockfiles') }}
+                  
+            - name: Install dependencies
+              run: npm install
+
+            - name: Run tests
+              run: npm test
+
+            - name: Archive test results
+              uses: actions/upload-artifact@v4
+              with:
+                  name: test-results_${{ matrix.node-version }}_${{ matrix.os }}
+                  path: ./test-results_${{ matrix.node-version }}_${{ matrix.os }}.xml
+    
+    code-coverage:
+        continue-on-error: true
+        strategy:
+            matrix:
+                node-version: [18, 20]
+                os: [ubuntu-latest] # macos-latest
+                exclude:
+                    - os: macos-latest
+                      node-version: 18
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node-version }}
+                  
+            - name: caching npm dependencies
+              uses: actions/cache@v4
+              id: cache
+              with:
+                  path: node_modules
+                  key: ${{ runner.os }}-node-modules-${{ hashFiles('**/lockfiles') }}
+                  
+            - name: Install dependencies
+              run: npm install
+
+            - name: Run tests
+              run: npm test
+
+            - name: Generate code coverage report
+              run: npm run coverage
+
+            - name: Archive code coverage results
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: code-coverage_${{ matrix.node-version }}_${{ matrix.os }}
+                  path: ./coverage
+                  retention-days: 5
