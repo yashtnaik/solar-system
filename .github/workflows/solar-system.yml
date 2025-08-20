@@ -16,6 +16,7 @@ env:
     IMAGE_NAME: 'solarsystem'
 
 jobs:
+    permis
     unit-testing:
         continue-on-error: true
         strategy:
@@ -84,6 +85,8 @@ jobs:
                   retention-days: 5
 
     docker-containerization:
+        permissions:
+            packages: write
         needs: [code-coverage, unit-testing]
         runs-on: ubuntu-latest
         steps:
