@@ -16,7 +16,6 @@ env:
     IMAGE_NAME: 'solarsystem'
 
 jobs:
-    permis
     unit-testing:
         continue-on-error: true
         strategy:
