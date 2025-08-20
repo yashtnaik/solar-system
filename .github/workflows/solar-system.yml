@@ -12,14 +12,16 @@ env:
     # MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
     # MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
     MONGO_URI: 'mongodb+srv://${{ vars.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@supercluster.d83jj.mongodb.net/superData?retryWrites=true&w=majority'
+    IMAGE_TAG: 'V1'
+    IMAGE_NAME: 'SolarSystem'
 
 jobs:
     unit-testing:
         continue-on-error: true
         strategy:
             matrix:
-                node-version: [18, 19, 20]
-                os: [ubuntu-latest, macos-latest]
+                node-version: [18, 20]
+                os: [ubuntu-latest] #macos-latest]
                 exclude:
                     - os: macos-latest
                       node-version: 18
@@ -32,12 +34,6 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: ${{ matrix.node-version }}
-
-            - name: Cache npm cache directory
-              uses: actions/cache@v4
-              with:
-                path: node_modules
-                key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
 
             - name: Install dependencies
               run: npm install
@@ -55,8 +51,8 @@ jobs:
         continue-on-error: true
         strategy:
             matrix:
-                node-version: [18, 19, 20]
-                os: [ubuntu-latest, macos-latest]
+                node-version: [18, 20]
+                os: [ubuntu-latest] # macos-latest
                 exclude:
                     - os: macos-latest
                       node-version: 18
@@ -69,12 +65,7 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: ${{ matrix.node-version }}
-                  
-            - name: Cache npm cache directory
-              uses: actions/cache@v4
-              with:
-                path: node_modules
-                key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+
             - name: Install dependencies
               run: npm install
 
@@ -91,3 +82,21 @@ jobs:
                   name: code-coverage_${{ matrix.node-version }}_${{ matrix.os }}
                   path: ./coverage
                   retention-days: 5
+
+    docker-containerization:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v2
+
+            - name: Build Docker image
+              run: |
+                  docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
+
+            - name: Push Docker image
+              run: |
+                  echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ vars.DOCKER_USERNAME }}" --password-stdin
+                  docker push ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
