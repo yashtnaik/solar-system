@@ -1,11 +1,11 @@
 name: Solar System Workflow
 
 on:
-    workflow_dispatch:
-    push:
-        branches:
-            - main
-            - 'feature/*'
+  workflow_dispatch:
+  push:
+      branches:
+          - main
+          - 'feature/*'
 
 env:
     # MONGO_URI: 'mongo+srv://supercluster.d83jj.mongodb.net/superData'
@@ -17,142 +17,142 @@ env:
 
 jobs:
     unit-testing:
-          name: Unit testing
-          continue-on-error: true
-          strategy:
-                matrix:
-                    node-version: [18, 20]
-                    os: [ubuntu-latest] #macos-latest]
-                    exclude:
-                        - os: macos-latest
-                          node-version: 18
-                          
-          runs-on: ${{ matrix.os }}
-          steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-
-            - name: Set up Node.js ${{ matrix.node-version}}
-              uses: actions/setup-node@v3
-              with:
-                  node-version: ${{ matrix.node-version }}
-                  
-            - name: caching npm dependencies
-              uses: actions/cache@v4
-              id: cache
-              with:
-                  path: node_modules
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('**/lockfiles') }}
-                  
-            - name: Install dependencies
-              run: npm install
-
-            - name: Run tests
-              run: npm test
-
-            - name: Archive test results
-              uses: actions/upload-artifact@v4
-              with:
-                  name: test-results_${{ matrix.node-version }}_${{ matrix.os }}
-                  path: ./test-results_${{ matrix.node-version }}_${{ matrix.os }}.xml
-    
-    code-coverage:
-        continue-on-error: true
-        strategy:
+      name: Unit testing
+      continue-on-error: true
+      strategy:
             matrix:
                 node-version: [18, 20]
-                os: [ubuntu-latest] # macos-latest
+                os: [ubuntu-latest] #macos-latest]
                 exclude:
                     - os: macos-latest
                       node-version: 18
-        runs-on: ${{ matrix.os }}
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+                      
+      runs-on: ${{ matrix.os }}
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
 
-            - name: Set up Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v3
-              with:
-                  node-version: ${{ matrix.node-version }}
-                  
-            - name: caching npm dependencies
-              uses: actions/cache@v4
-              id: cache
-              with:
-                  path: node_modules
-                  key: ${{ runner.os }}-node-modules-${{ hashFiles('**/lockfiles') }}
-                  
-            - name: Install dependencies
-              run: npm install
+        - name: Set up Node.js ${{ matrix.node-version}}
+          uses: actions/setup-node@v3
+          with:
+              node-version: ${{ matrix.node-version }}
+              
+        - name: caching npm dependencies
+          uses: actions/cache@v4
+          id: cache
+          with:
+              path: node_modules
+              key: ${{ runner.os }}-node-modules-${{ hashFiles('**/lockfiles') }}
+              
+        - name: Install dependencies
+          run: npm install
 
-            - name: Run tests
-              run: npm test
+        - name: Run tests
+          run: npm test
 
-            - name: Generate code coverage report
-              run: npm run coverage
-[O
-            - name: Archive code coverage results
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: code-coverage_${{ matrix.node-version }}_${{ matrix.os }}
-                  path: ./coverage
-                  retention-days: 5
+        - name: Archive test results
+          uses: actions/upload-artifact@v4
+          with:
+              name: test-results_${{ matrix.node-version }}_${{ matrix.os }}
+              path: ./test-results_${{ matrix.node-version }}_${{ matrix.os }}.xml
+    
+    code-coverage:
+      continue-on-error: true
+      strategy:
+          matrix:
+              node-version: [18, 20]
+              os: [ubuntu-latest] # macos-latest
+              exclude:
+                  - os: macos-latest
+                    node-version: 18
+      runs-on: ${{ matrix.os }}
+      steps:
+          - name: Checkout code
+            uses: actions/checkout@v4
+
+          - name: Set up Node.js ${{ matrix.node-version }}
+            uses: actions/setup-node@v3
+            with:
+                node-version: ${{ matrix.node-version }}
+                
+          - name: caching npm dependencies
+            uses: actions/cache@v4
+            id: cache
+            with:
+                path: node_modules
+                key: ${{ runner.os }}-node-modules-${{ hashFiles('**/lockfiles') }}
+                
+          - name: Install dependencies
+            run: npm install
+
+          - name: Run tests
+            run: npm test
+
+          - name: Generate code coverage report
+            run: npm run coverage
+
+          - name: Archive code coverage results
+            if: always()
+            uses: actions/upload-artifact@v4
+            with:
+                name: code-coverage_${{ matrix.node-version }}_${{ matrix.os }}
+                path: ./coverage
+                retention-days: 5
 
     docker-containerization:
-        permissions:
-            packages: write
-        needs: [code-coverage, unit-testing]
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+      permissions:
+          packages: write
+      needs: [code-coverage, unit-testing]
+      runs-on: ubuntu-latest
+      steps:
+          - name: Checkout code
+            uses: actions/checkout@v4
 
-            -   name: Login to Docker Hub
-                uses: docker/login-action@v3
-                with:
-                    username: ${{ vars.DOCKER_USERNAME }}
-                    password: ${{ secrets.DOCKER_PASSWORD }}
-                    
-            -   name: Login to ghcr
-                uses: docker/login-action@v3
-                with:
-                    registry: ghcr.io
-                    username: ${{ github.repository_owner }}
-                    password: ${{ secrets.GITHUB_TOKEN }}
+          -   name: Login to Docker Hub
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ vars.DOCKER_USERNAME }}
+                  password: ${{ secrets.DOCKER_PASSWORD }}
+                  
+          -   name: Login to ghcr
+              uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.repository_owner }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
-            -   name: Set up Docker Buildx
-                uses: docker/setup-buildx-action@v3
-            
-            -   name: Build and push
-                uses: docker/build-push-action@v6
-                with:
-                    push: true
-                    tags: |
-                        ${{ vars.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-                        ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          -   name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+          
+          -   name: Build and push
+              uses: docker/build-push-action@v6
+              with:
+                  push: true
+                  tags: |
+                      ${{ vars.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+                      ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
     deploy-k8s: 
-        needs: [docker-containerization]
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+      needs: [docker-containerization]
+      runs-on: ubuntu-latest
+      steps:
+          - name: Checkout code
+            uses: actions/checkout@v4
 
-            - name: Set up Kubectl
-              uses: azure/setup-kubectl@v1
-              with:
-                  version: 'latest'
+          - name: Set up Kubectl
+            uses: azure/setup-kubectl@v1
+            with:
+                version: 'latest'
 
-            - name: Set Kubeconfig Context
-              uses: azure/k8s-set-context@v3
-              with:
-                method: kubeconfig
-                kubeconfig: ${{ secrets.KUBECONFIG }}
+          - name: Set Kubeconfig Context
+            uses: azure/k8s-set-context@v3
+            with:
+              method: kubeconfig
+              kubeconfig: ${{ secrets.KUBECONFIG }}
 
-            - name: Deploy to Kubernetes
-              run: |
-                  kubectl get node
-                  kubectl get pods -A
-                  kubectl get svc -A
-                  # kubectl apply -f /manifest/deployment.yaml
-                  # kubectl set image deployment/${{ env.IMAGE_NAME }} ${{env.IMAGE_TAG}}
+          - name: Deploy to Kubernetes
+            run: |
+                kubectl get node
+                kubectl get pods -A
+                kubectl get svc -A
+                # kubectl apply -f /manifest/deployment.yaml
+                # kubectl set image deployment/${{ env.IMAGE_NAME }} ${{env.IMAGE_TAG}}
