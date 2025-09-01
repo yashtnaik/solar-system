@@ -90,7 +90,7 @@ jobs:
 
             - name: Generate code coverage report
               run: npm run coverage
-
+[O
             - name: Archive code coverage results
               if: always()
               uses: actions/upload-artifact@v4
@@ -143,8 +143,16 @@ jobs:
               with:
                   version: 'latest'
 
+            - name: Set Kubeconfig Context
+              uses: azure/k8s-set-context@v3
+              with:
+                method: kubeconfig
+                kubeconfig: ${{ secrets.KUBECONFIG }}
+
             - name: Deploy to Kubernetes
               run: |
-                  echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode
+                  kubectl get node
+                  kubectl get pods -A
+                  kubectl get svc -A
                   # kubectl apply -f /manifest/deployment.yaml
                   # kubectl set image deployment/${{ env.IMAGE_NAME }} ${{env.IMAGE_TAG}}
