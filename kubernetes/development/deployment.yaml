@@ -1,29 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  labels:
-    app: solar-system
   name: solar-system
-  namespace: ${NAMESPACE}
 spec:
-  replicas: ${REPLICAS}
+  replicas: 2
   selector:
     matchLabels:
       app: solar-system
-  strategy: {}
   template:
     metadata:
       labels:
         app: solar-system
     spec:
       containers:
-      - image: ${K8S_IMAGE}
-        imagePullPolicy: Always
-        name: solar-system
-        ports:
-        - containerPort: 3000
-          name: http
-          protocol: TCP
-        envFrom:
-        - secretRef:
-            name: mongo-db-creds
+        - name: solar-system
+          image: yashtnaik/solarsystem:V1
+          ports:
+            - containerPort: 3000
