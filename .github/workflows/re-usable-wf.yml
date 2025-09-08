@@ -2,14 +2,14 @@ name: reusable-workflow
 
 on:
     workflow_call:
-        inputs:
-            trigger:
-                description: 'Trigger the workflow'
-                required: true
-                type: boolean
-        secrets:
-            MONGO_PASSWORD:
-                required: true
+        # inputs:
+        #     trigger:
+        #         description: 'Trigger the workflow'
+        #         required: true
+        #         type: boolean
+        # secrets:
+        #     MONGO_PASSWORD:
+        #         required: true
         #   IMAGE_TAG:
         #       required: true
         #       type: string
