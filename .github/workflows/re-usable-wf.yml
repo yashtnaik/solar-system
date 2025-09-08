@@ -1,0 +1,36 @@
+name: reusable-workflow
+
+on:
+    workflow_call:
+        inputs:
+            trigger:
+                description: 'Trigger the workflow'
+                required: true
+                type: boolean
+        secrets:
+            MONGO_PASSWORD:
+                required: true
+        #   IMAGE_TAG:
+        #       required: true
+        #       type: string
+        #   IMAGE_NAME:
+        #       required: true
+        #       type: string
+jobs:
+    deploy:
+      runs-on: ubuntu-latest
+      steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Kubectl
+        uses: azure/setup-kubectl@v1
+        with:
+            version: 'latest'
+
+      - name: Deploy to Kubernetes
+        run: |
+            echo "Deployment to Kubernetes cluster is successful"
+            # echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode
+            # kubectl apply -f /manifest/deployment.yaml
+            # kubectl set image deployment/${{ env.IMAGE_NAME }} ${{env.IMAGE_TAG}}
