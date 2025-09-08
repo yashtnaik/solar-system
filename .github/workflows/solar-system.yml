@@ -134,8 +134,8 @@ jobs:
   deploy-k8s:
     needs: [docker-containerization]
     uses: ./.github/workflows/re-usable-wf.yml
-    with:
-      trigger: true
-      MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
-    secrets:
-      MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+      # with:
+      #  trigger: true
+        #      MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+        #    secrets:
+      #      MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
